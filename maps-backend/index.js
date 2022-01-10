@@ -12,7 +12,7 @@ const bcrypt = require("bcrypt-inzi");
 const { userModel, complainModel } = require("./model/index");
 
 const multer = require("multer");
-
+app.use("/", express.static(path.resolve(path.join(__dirname, "/build"))));
 const storage = multer.diskStorage({
   // https://www.npmjs.com/package/multer#diskstorage
   destination: "./uploads/",
