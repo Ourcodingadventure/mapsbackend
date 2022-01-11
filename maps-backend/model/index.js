@@ -49,6 +49,7 @@ const complainSchema = mongoose.Schema({
   feedback: String,
   issueName: String,
   createdOn: { type: Date, default: Date.now },
+  likesCount: Number,
 });
 
 const userModel = mongoose.model("user", userSchema);

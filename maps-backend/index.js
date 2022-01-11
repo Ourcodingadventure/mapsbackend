@@ -230,6 +230,34 @@ app.post("/update-complain", (req, res) => {
   });
 });
 
+app.post("/update-likes", (req, res) => {
+  complainModel.findById(req.body.id, (err, complain) => {
+    if (complain) {
+      complain.updateOne({ likesCount: req.body.likesCount }, (err, updated) => {
+        if (!err) {
+          io.emit("complain", "complainupdated");
+          let modifiedComplain = { ...complain, likesCount: req.body.likesCount };
+          io.emit("notification", {
+            updated: modifiedComplain,
+            complain,
+          });
+          res.status(200).send({
+            message: "complain updated successfully",
+          });
+        } else {
+          res.status(500).send({
+            message: "server error",
+          });
+        }
+      });
+    } else {
+      return res.status(403).send({
+        message: "complain not found",
+      });
+    }
+  });
+});
+
 app.post("/feedback-complain", (req, res) => {
   if (!req.body.id || !req.body.feedback) {
     res.send(`
