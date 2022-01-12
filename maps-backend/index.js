@@ -352,7 +352,7 @@ app.post("/delete-complain", (req, res, next) => {
   complainModel.findById(req.body.id,
     (err, complain) => {
       if (!err) {
-        complain.remove();
+        complain?.remove();
         io.emit("complain", "");
         return res.status(200).send({
           message: "complain deleted",
