@@ -10,19 +10,10 @@ var authController = require("./routes/auth-controller");
 const path = require("path");
 const bcrypt = require("bcrypt-inzi");
 const { userModel, complainModel } = require("./model/index");
-
+const cloudinary = require("./config/cloudinary.js");
 const multer = require("multer");
 app.use("/", express.static(path.resolve(path.join(__dirname, "/build"))));
-const storage = multer.diskStorage({
-  // https://www.npmjs.com/package/multer#diskstorage
-  destination: "./uploads/",
-  filename: function (req, file, cb) {
-    cb(
-      null,
-      `${new Date().getTime()}-${file.filename}.${file.mimetype.split("/")[1]}`
-    );
-  },
-});
+const storage = multer.diskStorage({});
 var upload = multer({ storage: storage });
 
 var socketIo = require("socket.io");
@@ -116,41 +107,48 @@ app.get("/profile", (req, res, next) => {
 
 app.post("/complain", upload.any(), (req, res, next) => {
   let body = JSON.parse(req.body.dataa);
-  userModel.findOne({ email: req.headers.jToken.email }, (err, user) => {
-    if (!err) {
-      complainModel
-        .create({
-          email: req.headers.jToken.email,
-          name: body.anonymous ? "anonymous" : req.headers.jToken.name,
+  cloudinary.uploader
+    .upload(req.files[0]?.path, (err, res) => {
+      const cloudResult = res && res;
+    })
+    .catch((e) => {})
+    .then((cloudResult) => {
+      userModel.findOne({ email: req.headers.jToken.email }, (err, user) => {
+        if (!err) {
+          complainModel
+            .create({
+              email: req.headers.jToken.email,
+              name: body.anonymous ? "anonymous" : req.headers.jToken.name,
 
-          locationText: body.locationText,
-          image: req.files[0]?.filename,
-          remarks: body?.message,
-          status: "pending",
-          latitude: body?.latitude,
-          longitude: body?.longitude,
-          altitude: body?.altitude,
-          feedback: "null",
-          issueName: body.category.name,
-          // phoneNumber: req.body.jToken.phoneNumber,
-        })
-        .then((complain) => {
-          io.emit("complain", {
-            complain,
-          });
-          return res.status(200).send({
-            message: "Your complain has been placed successfully",
-            complain: complain,
-          });
-        })
-        .catch((err) => {
-          console.log("err:", err);
-          res.status(500).send({
-            message: "an error occured",
-          });
-        });
-    }
-  });
+              locationText: body.locationText,
+              image: req.files[0] ? cloudResult.secure_url : null,
+              remarks: body?.message,
+              status: "pending",
+              latitude: body?.latitude,
+              longitude: body?.longitude,
+              altitude: body?.altitude,
+              feedback: "null",
+              issueName: body.category.name,
+              // phoneNumber: req.body.jToken.phoneNumber,
+            })
+            .then((complain) => {
+              io.emit("complain", {
+                complain,
+              });
+              return res.status(200).send({
+                message: "Your complain has been placed successfully",
+                complain: complain,
+              });
+            })
+            .catch((err) => {
+              console.log("err:", err);
+              return res.status(500).send({
+                message: "an error occured",
+              });
+            });
+        }
+      });
+    });
 });
 
 app.get("/complain", (req, res) => {
