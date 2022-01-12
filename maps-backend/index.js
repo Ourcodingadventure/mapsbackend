@@ -349,11 +349,10 @@ app.post("/delete-complain", (req, res, next) => {
             }
          `);
   }
-  complainModel.findOne(
-    { _id: req.body.id, email: req.body.jToken.email },
+  complainModel.findById(req.body.id,
     (err, complain) => {
       if (!err) {
-        complain.remove();
+        complain?.remove();
         io.emit("complain", "");
         return res.status(200).send({
           message: "complain deleted",
